@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: peoplecore
+      POSTGRES_USER: peoplecore
+      POSTGRES_PASSWORD: local_dev_only
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peoplecore"]
+      interval: 5s
+      retries: 15
+  redis:
+    image: redis:7-alpine
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://peoplecore:local_dev_only@db:5432/peoplecore
+    ports: ["4000:4000"]
+    depends_on:
+      db:
+        condition: service_healthy
+  payroll:
+    build: ./payroll
+    ports: ["8000:8000"]
+  web:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports: ["3000:3000"]
+    depends_on: [api]
+volumes:
+  pgdata:

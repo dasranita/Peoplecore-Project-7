@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS departments(id SERIAL PRIMARY KEY,name TEXT NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS employees(id SERIAL PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL UNIQUE,department_id INT REFERENCES departments(id),role TEXT NOT NULL DEFAULT 'employee',salary NUMERIC(12,2) NOT NULL DEFAULT 0,active BOOLEAN NOT NULL DEFAULT TRUE);
+CREATE TABLE IF NOT EXISTS attendance(id SERIAL PRIMARY KEY,employee_id INT NOT NULL REFERENCES employees(id),day DATE NOT NULL,status TEXT NOT NULL CHECK(status IN ('present','absent','leave')),UNIQUE(employee_id,day));
+CREATE TABLE IF NOT EXISTS leave_requests(id SERIAL PRIMARY KEY,employee_id INT NOT NULL REFERENCES employees(id),start_date DATE NOT NULL,end_date DATE NOT NULL,status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),CHECK(end_date>=start_date));
+CREATE TABLE IF NOT EXISTS payroll_runs(id SERIAL PRIMARY KEY,period TEXT NOT NULL UNIQUE,created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS payslips(id SERIAL PRIMARY KEY,run_id INT NOT NULL REFERENCES payroll_runs(id),employee_id INT NOT NULL REFERENCES employees(id),gross NUMERIC(12,2) NOT NULL,net NUMERIC(12,2) NOT NULL,UNIQUE(run_id,employee_id));
